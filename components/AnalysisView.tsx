@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Zap, RotateCcw, MessageSquare, AlertTriangle,
@@ -225,6 +225,91 @@ function ScoreChart({ reports }: { reports: Report[] }) {
   );
 }
 
+const ANALYSIS_PROVIDERS = [
+  { key: "openai", label: "ChatGPT", color: "#10a37f", delay: 0 },
+  { key: "anthropic", label: "Claude", color: "#d97757", delay: 8 },
+  { key: "perplexity", label: "Perplexity", color: "#20b2aa", delay: 16 },
+];
+
+function AnalysisLoader() {
+  const [progress, setProgress] = useState(0);
+  const [providerStatus, setProviderStatus] = useState<Record<string, "waiting" | "loading" | "done">>({
+    openai: "waiting", anthropic: "waiting", perplexity: "waiting",
+  });
+  const startTime = useRef(Date.now());
+
+  useEffect(() => {
+    const DURATION = 45000;
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime.current;
+      const raw = Math.min(92, (elapsed / DURATION) * 100);
+      setProgress(Math.round(raw));
+
+      setProviderStatus({
+        openai: elapsed > 0 ? (elapsed > 14000 ? "done" : "loading") : "waiting",
+        anthropic: elapsed > 8000 ? (elapsed > 22000 ? "done" : "loading") : "waiting",
+        perplexity: elapsed > 16000 ? (elapsed > 38000 ? "done" : "loading") : "waiting",
+      });
+    }, 200);
+    return () => clearInterval(interval);
+  }, []);
+
+  const statusIcon = (s: "waiting" | "loading" | "done") => {
+    if (s === "done") return <span style={{ color: "#4ade80" }}>✓</span>;
+    if (s === "loading") return <span className="inline-block w-3 h-3 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "currentColor", borderTopColor: "transparent" }} />;
+    return <span style={{ color: "var(--text-3)" }}>○</span>;
+  };
+
+  const messages = [
+    "Génération des questions personnalisées…",
+    "Interrogation des IA en cours…",
+    "Analyse des réponses…",
+    "Calcul du score de visibilité…",
+  ];
+  const msgIndex = Math.floor((progress / 92) * (messages.length - 1));
+
+  return (
+    <div className="rounded-2xl p-8 mb-6 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      {/* Cercle animé */}
+      <div className="relative w-20 h-20 mx-auto mb-6">
+        <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(124,58,237,0.1)" strokeWidth="5" />
+          <circle cx="40" cy="40" r="34" fill="none" stroke="url(#grad)" strokeWidth="5"
+            strokeLinecap="round"
+            strokeDasharray={`${(progress / 100) * 213.6} 213.6`}
+            style={{ transition: "stroke-dasharray 0.3s ease" }}
+          />
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#7c3aed" />
+              <stop offset="100%" stopColor="#20b2aa" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-lg font-black" style={{ color: "var(--text)" }}>{progress}%</span>
+        </div>
+      </div>
+
+      {/* Message dynamique */}
+      <p className="text-sm font-semibold mb-1" style={{ color: "var(--text)" }}>{messages[msgIndex]}</p>
+      <p className="text-xs mb-6" style={{ color: "var(--text-3)" }}>~45 secondes · Ne ferme pas cette page</p>
+
+      {/* Statuts par provider */}
+      <div className="flex items-center justify-center gap-6">
+        {ANALYSIS_PROVIDERS.map((p) => (
+          <div key={p.key} className="flex flex-col items-center gap-1.5">
+            <div className="text-sm" style={{ color: providerStatus[p.key] === "done" ? "#4ade80" : providerStatus[p.key] === "loading" ? p.color : "var(--text-3)" }}>
+              {statusIcon(providerStatus[p.key])}
+            </div>
+            <span className="text-xs font-medium" style={{ color: providerStatus[p.key] === "waiting" ? "var(--text-3)" : "var(--text-2)" }}>{p.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 type Tab = "overview" | "content" | "analysis" | "progress";
 
 export default function AnalysisView({ brand, reports, mentions, gaps, initialPublishedArticles, userCreatedAt }: {
@@ -393,13 +478,7 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
 
       {error && <p className="text-red-400 text-sm mb-4 rounded-xl px-4 py-2.5" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>{error}</p>}
 
-      {loading && (
-        <div className="rounded-2xl p-10 text-center mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin mx-auto mb-4" />
-          <p className="text-sm" style={{ color: "var(--text-2)" }}>Interrogation des IA en cours...</p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>ChatGPT · Claude · Perplexity — ~30 secondes</p>
-        </div>
-      )}
+      {loading && <AnalysisLoader />}
 
       {!latest && !loading && (
         <div className="rounded-2xl p-12 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
