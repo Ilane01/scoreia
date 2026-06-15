@@ -26,17 +26,31 @@ export async function generateQuestions(
       messages: [
         {
           role: "system",
-          content: `Tu es un expert en GEO (Generative Engine Optimization).
+          content: `Tu es un expert GEO. Génère des questions qui pourraient amener une IA à citer "${brandName}".
 
-Ta mission : générer 18 questions que de vrais clients tapent dans ChatGPT, Gemini ou Perplexity — des questions qui pourraient amener l'IA à citer "${brandName}".
+ÉTAPE 1 — Détermine le type de marque :
+A) ENSEIGNE / DISTRIBUTEUR / MAGASIN (vend des produits d'autres marques : Darty, Amazon, Fnac, Electro Dépôt, Leroy Merlin…)
+B) MARQUE PRODUIT (fabrique ses propres produits : Samsung, Nike, Apple…)
+C) PRESTATAIRE DE SERVICE (agence, cabinet, consultant, SaaS…)
 
-IMPORTANT : Utilise ta connaissance réelle de cette marque/entreprise pour générer des questions précises et pertinentes. Ne devine pas ce qu'elle vend — tu le sais déjà si c'est une marque connue.
+ÉTAPE 2 — Génère les questions selon le type :
+
+Si TYPE A (enseigne/distributeur) :
+→ Les questions doivent être "OÙ ACHETER ?" ou "QUEL MAGASIN ?", PAS "QUEL PRODUIT ?"
+✓ BONS exemples : "Quel magasin recommandes-tu pour acheter un frigo ?" / "Où trouver de l'électroménager pas cher en France ?" / "Comparatif Darty vs Boulanger vs [enseigne] ?"
+✗ MAUVAIS exemples : "Comment choisir un lave-linge ?" / "Quels sont les avis sur les réfrigérateurs ?" / "Comment entretenir un appareil ?"
+
+Si TYPE B (marque produit) :
+→ Les questions portent sur les produits et comparatifs entre marques
+✓ "Quelle marque de [produit] recommandes-tu ?" / "[Marque] vs [Marque] lequel est mieux ?"
+
+Si TYPE C (prestataire) :
+→ Les questions portent sur le choix du prestataire
+✓ "Quel prestataire recommandes-tu pour [service] ?" / "Meilleures agences pour [service] ?"
 
 Règles :
-- Les questions doivent correspondre exactement à ce que vend ou fait réellement cette marque
-- 15 questions génériques (sans citer le nom de la marque) + 3 questions de notoriété (avec le nom)
-- Questions naturelles, conversationnelles, en français
-- Une question par ligne, sans numérotation ni tiret`,
+- 15 questions génériques (sans le nom de la marque) + 3 avec le nom
+- Questions naturelles, en français, une par ligne, sans numérotation`,
         },
         {
           role: "user",
@@ -44,8 +58,8 @@ Règles :
 
 ${context}
 
-Consigne : base-toi sur ce que cette marque vend/fait RÉELLEMENT (utilise ta connaissance du monde).
-15 questions génériques + 3 avec le nom de la marque. Une par ligne.`,
+Commence par identifier le TYPE (A/B/C), puis génère les 18 questions adaptées.
+Format de réponse : d'abord une ligne "TYPE: A" (ou B ou C), puis les 18 questions, une par ligne.`,
         },
       ],
     });
@@ -54,7 +68,7 @@ Consigne : base-toi sur ce que cette marque vend/fait RÉELLEMENT (utilise ta co
     const questions = raw
       .split("\n")
       .map(q => q.trim().replace(/^[-–•*\d.]+\s*/, ""))
-      .filter(q => q.length > 10 && q.includes("?"))
+      .filter(q => q.length > 10 && q.includes("?") && !q.startsWith("TYPE:"))
       .slice(0, 18);
 
     if (questions.length >= 10) return questions;
