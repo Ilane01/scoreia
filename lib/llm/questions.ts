@@ -27,24 +27,44 @@ export async function generateQuestions(
         {
           role: "system",
           content: `Tu es un expert en GEO (Generative Engine Optimization).
-Tu dois générer des questions que de vrais clients tapent dans ChatGPT, Gemini ou Perplexity quand ils cherchent un produit/service dans ce secteur.
-Ces questions serviront à tester si la marque "${brandName}" est citée par les IA.
+Tu dois générer des questions que de vrais clients tapent dans ChatGPT, Gemini ou Perplexity quand ils cherchent "${brandName}".
 
-Règles :
-- La MAJORITÉ des questions ne doit PAS mentionner le nom de la marque (questions génériques comme un vrai client le ferait)
-- Les questions doivent être naturelles, conversationnelles, en français
-- Elles doivent couvrir : recommandations, comparatifs, prix, qualité, avis, comment choisir
-- Varie les intentions : informationnelles, transactionnelles, comparatives
-- Adapte les questions au secteur réel, pas juste aux mots-clés fournis
-- Ne génère que les questions, une par ligne, sans numérotation ni tiret`,
+ÉTAPE 1 — Identifie le TYPE d'entité :
+- ENSEIGNE / DISTRIBUTEUR (magasin, chaîne de vente, site e-commerce) → les clients cherchent OÙ ACHETER
+- MARQUE PRODUIT (fabricant, marque de produits) → les clients cherchent QUEL PRODUIT ACHETER
+- PRESTATAIRE DE SERVICE (agence, cabinet, coach) → les clients cherchent QUI ENGAGER
+- INSTITUTION / MEDIA / AUTRE → adapte en conséquence
+
+ÉTAPE 2 — Génère des questions selon le type identifié :
+
+Si ENSEIGNE/DISTRIBUTEUR :
+→ "Quel magasin recommandes-tu pour acheter [catégorie] ?"
+→ "Où trouver [catégorie] pas cher en France ?"
+→ "Comparatif des enseignes [secteur] : laquelle choisir ?"
+→ "Meilleur rapport qualité-prix pour acheter [catégorie] ?"
+
+Si MARQUE PRODUIT :
+→ "Quelle marque de [catégorie] est la meilleure ?"
+→ "Comparatif [Marque A] vs [Marque B]"
+
+Si PRESTATAIRE :
+→ "Quel prestataire recommandes-tu pour [service] ?"
+→ "Meilleures agences/cabinets pour [service]"
+
+Règles absolues :
+- Les questions doivent cibler le BON niveau (enseigne → où acheter, pas quoi acheter)
+- Questions naturelles, conversationnelles, en français
+- 15 questions génériques (sans le nom de la marque) + 3 avec le nom
+- Une question par ligne, sans numérotation ni tiret`,
         },
         {
           role: "user",
-          content: `Génère 18 questions pour analyser la visibilité IA de cette marque :
+          content: `Génère 18 questions pour analyser la visibilité IA de cette entité :
 
 ${context}
 
-Génère 15 questions génériques (sans le nom de la marque) + 3 questions de notoriété (avec le nom de la marque).
+Identifie d'abord si c'est une enseigne/distributeur, une marque produit, ou un prestataire de service.
+Puis génère 15 questions génériques (sans le nom) + 3 questions de notoriété (avec le nom).
 Une question par ligne.`,
         },
       ],
