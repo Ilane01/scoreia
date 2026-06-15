@@ -95,11 +95,12 @@ function generateContentPlan(brand: Brand, gaps: Analysis[]): PlanItem[] {
   return result;
 }
 
-function checkCompetitorsMentioned(competitors: string[], allResponses: Analysis[]): { name: string; cited: boolean }[] {
+function checkCompetitorsMentioned(competitors: string[], allResponses: Analysis[]): { name: string; cited: boolean; count: number; total: number; providers: string[] }[] {
   return competitors.map((comp) => {
     const lower = comp.toLowerCase().trim();
-    const cited = allResponses.some((r) => r.response?.toLowerCase().includes(lower));
-    return { name: comp.trim(), cited };
+    const matches = allResponses.filter((r) => r.response?.toLowerCase().includes(lower));
+    const providers = [...new Set(matches.map((r) => r.provider))];
+    return { name: comp.trim(), cited: matches.length > 0, count: matches.length, total: allResponses.length, providers };
   });
 }
 
@@ -649,27 +650,48 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
                     </div>
                   </div>
                   <div style={{ background: "var(--surface)" }}>
-                    {competitorResults.map((c, i) => (
-                      <div key={c.name} className="flex items-center gap-3 px-5 py-3.5"
-                        style={{ borderBottom: i < competitorResults.length - 1 ? "1px solid var(--border)" : "none" }}>
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-black"
-                          style={{ background: c.cited ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)", color: c.cited ? "#f87171" : "#4ade80" }}>
-                          {c.name.slice(0, 2).toUpperCase()}
+                    {competitorResults.map((c, i) => {
+                      const pct = c.total > 0 ? Math.round((c.count / c.total) * 100) : 0;
+                      const providerLabels: Record<string, string> = { openai: "ChatGPT", anthropic: "Claude", perplexity: "Perplexity", gemini: "Gemini" };
+                      return (
+                        <div key={c.name} className="px-5 py-4"
+                          style={{ borderBottom: i < competitorResults.length - 1 ? "1px solid var(--border)" : "none" }}>
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-black"
+                              style={{ background: c.cited ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)", color: c.cited ? "#f87171" : "#4ade80" }}>
+                              {c.name.slice(0, 2).toUpperCase()}
+                            </div>
+                            <span className="text-sm font-semibold flex-1" style={{ color: "var(--text)" }}>{c.name}</span>
+                            {c.cited ? (
+                              <span className="text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5"
+                                style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.15)" }}>
+                                <Flame size={10} /> {c.count} fois · {pct}%
+                              </span>
+                            ) : (
+                              <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                style={{ background: "rgba(34,197,94,0.08)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.15)" }}>
+                                Non cité ✓
+                              </span>
+                            )}
+                          </div>
+                          {c.cited && (
+                            <div className="flex items-center gap-2 pl-11">
+                              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface-2)" }}>
+                                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #f87171, #fb923c)" }} />
+                              </div>
+                              <div className="flex gap-1.5 shrink-0">
+                                {c.providers.map((p) => (
+                                  <span key={p} className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                                    style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}>
+                                    {providerLabels[p] ?? p}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <span className="text-sm font-medium flex-1" style={{ color: "var(--text)" }}>{c.name}</span>
-                        {c.cited ? (
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5"
-                            style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.15)" }}>
-                            <Flame size={10} /> Cité à votre place
-                          </span>
-                        ) : (
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                            style={{ background: "rgba(34,197,94,0.08)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.15)" }}>
-                            Non cité ✓
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
