@@ -9,9 +9,9 @@ import Link from "next/link";
 const TOTAL_STEPS = 4;
 
 const INDUSTRIES = [
-  "E-commerce", "Santé & Bien-être", "Services B2B", "Formation & Éducation",
-  "Immobilier", "Finance & Assurance", "Marketing & Agences", "Restauration & Hôtellerie",
-  "Juridique & Conseil", "Coaching & Consulting", "Artisanat & BTP", "Autre",
+  "E-commerce", "Retail & Commerce", "Santé & Bien-être", "Services B2B",
+  "Formation & Éducation", "Immobilier", "Finance & Assurance", "Marketing & Agences",
+  "Restauration & Hôtellerie", "Juridique & Conseil", "Coaching & Consulting", "Artisanat & BTP", "Autre",
 ];
 
 export default function OnboardingPage() {
