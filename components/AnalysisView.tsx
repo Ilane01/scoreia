@@ -612,17 +612,24 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
 
               {/* Gap questions */}
               {topGapQuestions.length > 0 && (
-                <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                  <h2 className="font-semibold text-sm mb-1 flex items-center gap-2">
-                    <AlertTriangle size={14} className="text-red-400" />
-                    Questions où vous êtes invisible
-                  </h2>
-                  <p className="text-xs mb-4" style={{ color: "var(--text-2)" }}>Les IA ne vous citent pas — vos clients potentiels vous ratent.</p>
-                  <div className="space-y-2">
+                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(239,68,68,0.18)" }}>
+                  <div className="px-5 py-4 flex items-center gap-3" style={{ background: "rgba(239,68,68,0.06)", borderBottom: "1px solid rgba(239,68,68,0.12)" }}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(239,68,68,0.12)" }}>
+                      <AlertTriangle size={13} className="text-red-400" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-sm" style={{ color: "var(--text)" }}>Questions où vous êtes invisible</h2>
+                      <p className="text-xs" style={{ color: "var(--text-3)" }}>Les IA ne vous citent pas sur ces requêtes</p>
+                    </div>
+                    <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(239,68,68,0.12)", color: "#f87171" }}>
+                      {topGapQuestions.length} questions
+                    </span>
+                  </div>
+                  <div style={{ background: "var(--surface)" }}>
                     {topGapQuestions.map((q, i) => (
-                      <div key={i} className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.1)" }}>
-                        <span className="text-red-400 text-xs mt-0.5 shrink-0">✕</span>
-                        <p className="text-sm italic" style={{ color: "var(--text-2)" }}>&ldquo;{q}&rdquo;</p>
+                      <div key={i} className="flex items-start gap-3 px-5 py-3.5" style={{ borderBottom: i < topGapQuestions.length - 1 ? "1px solid var(--border)" : "none" }}>
+                        <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5" style={{ background: "rgba(239,68,68,0.1)", color: "#f87171" }}>{i + 1}</span>
+                        <p className="text-sm leading-relaxed" style={{ color: "var(--text-2)" }}>&ldquo;{q}&rdquo;</p>
                       </div>
                     ))}
                   </div>
@@ -631,23 +638,36 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
 
               {/* Concurrents */}
               {competitorResults.length > 0 && (
-                <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid rgba(251,146,60,0.2)" }}>
-                  <h2 className="font-semibold text-sm mb-1 flex items-center gap-2">
-                    <Target size={14} className="text-orange-400" />
-                    Veille concurrentielle
-                  </h2>
-                  <p className="text-xs mb-4" style={{ color: "var(--text-2)" }}>Vos concurrents sont-ils cités à votre place ?</p>
-                  <div className="space-y-2">
-                    {competitorResults.map((c) => (
-                      <div key={c.name} className="flex items-center justify-between rounded-xl px-4 py-2.5"
-                        style={{ background: c.cited ? "rgba(239,68,68,0.04)" : "rgba(34,197,94,0.04)", border: `1px solid ${c.cited ? "rgba(239,68,68,0.15)" : "rgba(34,197,94,0.1)"}` }}>
-                        <div className="flex items-center gap-2">
-                          <Flame size={12} style={{ color: c.cited ? "#f87171" : "var(--text-3)" }} />
-                          <span className="text-sm font-medium">{c.name}</span>
+                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(251,146,60,0.18)" }}>
+                  <div className="px-5 py-4 flex items-center gap-3" style={{ background: "rgba(251,146,60,0.06)", borderBottom: "1px solid rgba(251,146,60,0.12)" }}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(251,146,60,0.12)" }}>
+                      <Target size={13} className="text-orange-400" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-sm" style={{ color: "var(--text)" }}>Veille concurrentielle</h2>
+                      <p className="text-xs" style={{ color: "var(--text-3)" }}>Vos concurrents sont-ils cités à votre place ?</p>
+                    </div>
+                  </div>
+                  <div style={{ background: "var(--surface)" }}>
+                    {competitorResults.map((c, i) => (
+                      <div key={c.name} className="flex items-center gap-3 px-5 py-3.5"
+                        style={{ borderBottom: i < competitorResults.length - 1 ? "1px solid var(--border)" : "none" }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-black"
+                          style={{ background: c.cited ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)", color: c.cited ? "#f87171" : "#4ade80" }}>
+                          {c.name.slice(0, 2).toUpperCase()}
                         </div>
-                        <span className="text-xs font-semibold" style={{ color: c.cited ? "#f87171" : "#4ade80" }}>
-                          {c.cited ? "Cité à votre place" : "Non cité ✓"}
-                        </span>
+                        <span className="text-sm font-medium flex-1" style={{ color: "var(--text)" }}>{c.name}</span>
+                        {c.cited ? (
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5"
+                            style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.15)" }}>
+                            <Flame size={10} /> Cité à votre place
+                          </span>
+                        ) : (
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                            style={{ background: "rgba(34,197,94,0.08)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.15)" }}>
+                            Non cité ✓
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
