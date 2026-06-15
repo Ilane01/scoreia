@@ -514,6 +514,7 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
               {[
                 { label: "ChatGPT", score: latest.openai_score, color: "#10a37f" },
                 { label: "Claude", score: latest.anthropic_score, color: "#d97757" },
+                { label: "Gemini", score: latest.gemini_score ?? 0, color: "#4285f4" },
                 { label: "Perplexity", score: latest.perplexity_score ?? 0, color: "#20b2aa" },
               ].map((item) => (
                 <div key={item.label}>
