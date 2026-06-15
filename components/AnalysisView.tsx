@@ -229,13 +229,14 @@ function ScoreChart({ reports }: { reports: Report[] }) {
 const ANALYSIS_PROVIDERS = [
   { key: "openai", label: "ChatGPT", color: "#10a37f", delay: 0 },
   { key: "anthropic", label: "Claude", color: "#d97757", delay: 8 },
-  { key: "perplexity", label: "Perplexity", color: "#20b2aa", delay: 16 },
+  { key: "gemini", label: "Gemini", color: "#4285f4", delay: 14 },
+  { key: "perplexity", label: "Perplexity", color: "#20b2aa", delay: 20 },
 ];
 
 function AnalysisLoader() {
   const [progress, setProgress] = useState(0);
   const [providerStatus, setProviderStatus] = useState<Record<string, "waiting" | "loading" | "done">>({
-    openai: "waiting", anthropic: "waiting", perplexity: "waiting",
+    openai: "waiting", anthropic: "waiting", gemini: "waiting", perplexity: "waiting",
   });
   const startTime = useRef(Date.now());
 
@@ -249,7 +250,8 @@ function AnalysisLoader() {
       setProviderStatus({
         openai: elapsed > 0 ? (elapsed > 14000 ? "done" : "loading") : "waiting",
         anthropic: elapsed > 8000 ? (elapsed > 22000 ? "done" : "loading") : "waiting",
-        perplexity: elapsed > 16000 ? (elapsed > 38000 ? "done" : "loading") : "waiting",
+        gemini: elapsed > 14000 ? (elapsed > 28000 ? "done" : "loading") : "waiting",
+        perplexity: elapsed > 20000 ? (elapsed > 40000 ? "done" : "loading") : "waiting",
       });
     }, 200);
     return () => clearInterval(interval);

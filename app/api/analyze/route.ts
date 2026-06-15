@@ -4,7 +4,7 @@ import { generateQuestions } from "@/lib/llm/questions";
 import { queryLLM, type LLMProvider } from "@/lib/llm/providers";
 import { analyzeResponse, calculateScore } from "@/lib/llm/analyzer";
 
-const PROVIDERS: LLMProvider[] = ["openai", "anthropic", "perplexity"];
+const PROVIDERS: LLMProvider[] = ["openai", "anthropic", "gemini", "perplexity"];
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
