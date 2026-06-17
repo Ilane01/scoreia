@@ -10,12 +10,18 @@ import ContentGeneratorModal from "@/components/ContentGeneratorModal";
 
 interface Brand { id: string; name: string; website?: string; industry: string; keywords: string[]; context?: string; competitors?: string[] }
 interface Report { id: string; overall_score: number; openai_score: number; anthropic_score: number; gemini_score: number; perplexity_score: number; created_at: string }
-interface Analysis { id: string; provider: string; question: string; excerpt: string | null; sentiment: string; is_mentioned: boolean; response: string }
+interface Analysis { id: string; provider: string; question: string; excerpt: string | null; sentiment: string; is_mentioned: boolean; response: string; created_at?: string }
 interface PublishedArticle { id: string; article_title: string; platform: string; published_at: string }
 
 const PROVIDER_LABELS: Record<string, string> = { openai: "ChatGPT", anthropic: "Claude", gemini: "Gemini", perplexity: "Perplexity" };
 const PROVIDER_COLORS: Record<string, string> = { openai: "bg-green-500", anthropic: "bg-violet-500", gemini: "bg-blue-500", perplexity: "bg-cyan-500" };
 const PROVIDER_TEXT: Record<string, string> = { openai: "text-green-400", anthropic: "text-violet-400", gemini: "text-blue-400", perplexity: "text-cyan-400" };
+const PROVIDER_THEME: Record<string, { bg: string; header: string; bubble: string; accent: string; icon: string }> = {
+  openai:    { bg: "#f9fafb", header: "#202123", bubble: "#f0f4f9", accent: "#10a37f", icon: "🤖" },
+  anthropic: { bg: "#fdf8f5", header: "#3d1f00", bubble: "#fef3ec", accent: "#d97757", icon: "🅐" },
+  gemini:    { bg: "#f8f9ff", header: "#1a1f5e", bubble: "#eef0ff", accent: "#4285f4", icon: "✦" },
+  perplexity:{ bg: "#f5fafa", header: "#0d1117", bubble: "#e8f8f7", accent: "#20b2aa", icon: "◎" },
+};
 
 function ScoreCircle({ score, size = 80 }: { score: number; size?: number }) {
   const pct = Math.min(100, Math.max(0, score));
@@ -104,38 +110,62 @@ function checkCompetitorsMentioned(competitors: string[], allResponses: Analysis
   });
 }
 
-function MentionCard({ m }: { m: Analysis }) {
+function highlightBrand(text: string, brandName: string): React.ReactNode {
+  const escaped = brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
+  return parts.map((p, i) =>
+    p.toLowerCase() === brandName.toLowerCase()
+      ? <mark key={i} style={{ background: "rgba(250,204,21,0.4)", borderRadius: "3px", padding: "0 2px" }}>{p}</mark>
+      : p
+  );
+}
+
+function MentionCard({ m, brandName }: { m: Analysis; brandName: string }) {
   const [expanded, setExpanded] = useState(false);
-  const preview = m.response?.slice(0, 320);
-  const hasMore = m.response && m.response.length > 320;
+  const theme = PROVIDER_THEME[m.provider] ?? PROVIDER_THEME.openai;
+  const preview = m.response?.slice(0, 380);
+  const hasMore = m.response && m.response.length > 380;
+  const dateStr = m.created_at
+    ? new Date(m.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) + " · " + new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+    : null;
+
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
+    <div className="rounded-xl overflow-hidden shadow-sm" style={{ border: "1px solid rgba(0,0,0,0.1)", background: theme.bg }}>
+      {/* Barre titre façon navigateur */}
+      <div className="flex items-center justify-between px-4 py-2.5" style={{ background: theme.header }}>
         <div className="flex items-center gap-2">
-          <span className={`text-xs rounded-full px-2.5 py-0.5 font-semibold text-white ${PROVIDER_COLORS[m.provider] ?? "bg-gray-500"}`}>
-            {PROVIDER_LABELS[m.provider] ?? m.provider}
-          </span>
-          <span className="text-xs font-medium" style={{ color: m.sentiment === "positive" ? "#16a34a" : m.sentiment === "negative" ? "#dc2626" : "var(--text-3)" }}>
-            {m.sentiment === "positive" ? "● Positif" : m.sentiment === "negative" ? "● Négatif" : "● Neutre"}
+          <span className="text-base">{theme.icon}</span>
+          <span className="text-xs font-bold text-white">{PROVIDER_LABELS[m.provider] ?? m.provider}</span>
+          <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }}>
+            Résultat réel
           </span>
         </div>
-        <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>Cité ✓</span>
+        <div className="flex items-center gap-2">
+          {dateStr && <span className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>🕐 {dateStr}</span>}
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.25)", color: "#4ade80" }}>Cité ✓</span>
+        </div>
       </div>
-      {/* Question */}
-      <div className="px-4 pt-3 pb-2">
-        <p className="text-xs italic mb-3" style={{ color: "var(--text-3)" }}>&ldquo;{m.question}&rdquo;</p>
-        {/* Response */}
-        <div className="rounded-lg p-3 text-sm leading-relaxed" style={{ background: "var(--surface-2)", color: "var(--text-2)", whiteSpace: "pre-wrap" }}>
-          {expanded ? m.response : preview}
-          {!expanded && hasMore && <span style={{ color: "var(--text-3)" }}>…</span>}
+      {/* Bulle question (utilisateur) */}
+      <div className="px-4 pt-4 pb-2 flex justify-end">
+        <div className="max-w-[80%] rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm" style={{ background: theme.accent, color: "white" }}>
+          {m.question}
         </div>
-        {hasMore && (
-          <button onClick={() => setExpanded(!expanded)}
-            className="mt-2 text-xs font-medium transition-colors" style={{ color: "var(--accent)" }}>
-            {expanded ? "▲ Réduire" : "▼ Voir la réponse complète"}
-          </button>
-        )}
+      </div>
+      {/* Réponse IA */}
+      <div className="px-4 pb-4 flex gap-2.5">
+        <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1 text-sm" style={{ background: theme.header, color: "white" }}>
+          {theme.icon}
+        </div>
+        <div className="flex-1 rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed" style={{ background: theme.bubble, color: "#1a1a2e", whiteSpace: "pre-wrap" }}>
+          {highlightBrand(expanded ? (m.response ?? "") : (preview ?? ""), brandName)}
+          {!expanded && hasMore && <span style={{ color: "#999" }}>…</span>}
+          {hasMore && (
+            <button onClick={() => setExpanded(!expanded)}
+              className="block mt-2 text-xs font-semibold transition-colors" style={{ color: theme.accent }}>
+              {expanded ? "▲ Réduire" : "▼ Voir la suite"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -324,8 +354,8 @@ function AnalysisLoader() {
 
 type Tab = "overview" | "content" | "analysis" | "progress";
 
-export default function AnalysisView({ brand, reports, mentions, gaps, initialPublishedArticles, userCreatedAt }: {
-  brand: Brand; reports: Report[]; mentions: Analysis[]; gaps: Analysis[]; initialPublishedArticles: PublishedArticle[]; userCreatedAt?: string;
+export default function AnalysisView({ brand, reports, mentions, gaps, initialPublishedArticles, userCreatedAt, industryAvgScore, industrySampleSize }: {
+  brand: Brand; reports: Report[]; mentions: Analysis[]; gaps: Analysis[]; initialPublishedArticles: PublishedArticle[]; userCreatedAt?: string; industryAvgScore?: number | null; industrySampleSize?: number;
 }) {
   const router = useRouter();
   const TRIAL_DAYS = 14;
@@ -538,6 +568,37 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
                 </div>
               ))}
             </div>
+            {/* Benchmark sectoriel */}
+            {industryAvgScore !== null && industryAvgScore !== undefined && latest && (
+              <div className="mt-5 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-3)" }}>
+                      Benchmark — {brand.industry}
+                      {industrySampleSize ? <span className="font-normal ml-1">({industrySampleSize} marque{industrySampleSize > 1 ? "s" : ""} analysée{industrySampleSize > 1 ? "s" : ""})</span> : null}
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 relative h-3 rounded-full overflow-hidden" style={{ background: "var(--surface-2)" }}>
+                        <div className="h-full rounded-full" style={{ width: `${industryAvgScore}%`, background: "rgba(0,0,0,0.15)" }} />
+                        <div className="absolute top-0 h-full rounded-full transition-all" style={{ width: `${latest.overall_score}%`, background: latest.overall_score >= industryAvgScore ? "#22c55e" : "#ef4444" }} />
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 text-xs">
+                        <span className="font-black text-base" style={{ color: latest.overall_score >= industryAvgScore ? "#22c55e" : "#ef4444" }}>{latest.overall_score}</span>
+                        <span style={{ color: "var(--text-3)" }}>vs</span>
+                        <span className="font-semibold" style={{ color: "var(--text-2)" }}>{industryAvgScore} moy.</span>
+                        <span className="font-bold px-2 py-0.5 rounded-full text-[11px]" style={{
+                          background: latest.overall_score >= industryAvgScore ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                          color: latest.overall_score >= industryAvgScore ? "#22c55e" : "#ef4444"
+                        }}>
+                          {latest.overall_score >= industryAvgScore ? `+${latest.overall_score - industryAvgScore}` : `${latest.overall_score - industryAvgScore}`} pts
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Methodology + Timeline */}
             <div className="mt-5 pt-4 space-y-2.5" style={{ borderTop: "1px solid var(--border)" }}>
               {/* Data points badge */}
@@ -618,7 +679,7 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
                 </p>
                 {genericMentions.length > 0 ? (
                   <div className="space-y-3">
-                    {genericMentions.map((m) => <MentionCard key={m.id} m={m} />)}
+                    {genericMentions.map((m) => <MentionCard key={m.id} m={m} brandName={brand.name} />)}
                   </div>
                 ) : (
                   <div className="rounded-xl px-4 py-5 text-center" style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.1)" }}>
@@ -639,7 +700,7 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
                   </h2>
                   <p className="text-xs mb-4" style={{ color: "var(--text-2)" }}>Ce que ChatGPT, Claude et Perplexity savent de vous quand on leur parle directement de votre marque.</p>
                   <div className="space-y-3">
-                    {awarenessMentions.map((m) => <MentionCard key={m.id} m={m} />)}
+                    {awarenessMentions.map((m) => <MentionCard key={m.id} m={m} brandName={brand.name} />)}
                   </div>
                 </div>
               )}
@@ -877,7 +938,7 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
                 </h2>
                 <p className="text-xs mb-4" style={{ color: "var(--text-2)" }}>Requêtes sans mention de votre marque — ce que vos vrais clients tapent dans l&apos;IA.</p>
                 {genericMentions.length > 0 ? (
-                  <div className="space-y-3">{genericMentions.map((m) => <MentionCard key={m.id} m={m} />)}</div>
+                  <div className="space-y-3">{genericMentions.map((m) => <MentionCard key={m.id} m={m} brandName={brand.name} />)}</div>
                 ) : (
                   <div className="rounded-xl px-4 py-5 text-center" style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.1)" }}>
                     <p className="text-sm font-medium mb-1" style={{ color: "#f87171" }}>Pas encore cité spontanément</p>
@@ -894,7 +955,7 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
                     Comment l&apos;IA vous décrit (notoriété)
                   </h2>
                   <p className="text-xs mb-4" style={{ color: "var(--text-2)" }}>Réponses quand on demande directement à l&apos;IA ce qu&apos;elle sait de vous.</p>
-                  <div className="space-y-3">{awarenessMentions.map((m) => <MentionCard key={m.id} m={m} />)}</div>
+                  <div className="space-y-3">{awarenessMentions.map((m) => <MentionCard key={m.id} m={m} brandName={brand.name} />)}</div>
                 </div>
               )}
             </div>
