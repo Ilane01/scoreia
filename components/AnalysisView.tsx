@@ -106,28 +106,37 @@ function checkCompetitorsMentioned(competitors: string[], allResponses: Analysis
 
 function MentionCard({ m }: { m: Analysis }) {
   const [expanded, setExpanded] = useState(false);
+  const preview = m.response?.slice(0, 320);
+  const hasMore = m.response && m.response.length > 320;
   return (
-    <div className="rounded-xl p-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`text-xs rounded-full px-2.5 py-0.5 font-medium text-white ${PROVIDER_COLORS[m.provider] ?? "bg-gray-500"}`}>
-          {PROVIDER_LABELS[m.provider] ?? m.provider}
-        </span>
-        <span className="text-xs font-medium" style={{ color: m.sentiment === "positive" ? "#16a34a" : m.sentiment === "negative" ? "#dc2626" : "var(--text-3)" }}>
-          {m.sentiment === "positive" ? "✓ Positif" : m.sentiment === "negative" ? "⚠ Négatif" : "Neutre"}
-        </span>
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs rounded-full px-2.5 py-0.5 font-semibold text-white ${PROVIDER_COLORS[m.provider] ?? "bg-gray-500"}`}>
+            {PROVIDER_LABELS[m.provider] ?? m.provider}
+          </span>
+          <span className="text-xs font-medium" style={{ color: m.sentiment === "positive" ? "#16a34a" : m.sentiment === "negative" ? "#dc2626" : "var(--text-3)" }}>
+            {m.sentiment === "positive" ? "● Positif" : m.sentiment === "negative" ? "● Négatif" : "● Neutre"}
+          </span>
+        </div>
+        <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>Cité ✓</span>
       </div>
-      <p className="text-xs mb-2 italic" style={{ color: "var(--text-3)" }}>&ldquo;{m.question}&rdquo;</p>
-      {expanded ? (
-        <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text-2)" }}>{m.response}</p>
-      ) : (
-        m.excerpt && <p className="text-sm leading-relaxed" style={{ color: "var(--text-2)" }}>&ldquo;...{m.excerpt}...&rdquo;</p>
-      )}
-      {m.response && (
-        <button onClick={() => setExpanded(!expanded)}
-          className="mt-2 text-xs transition-colors" style={{ color: "var(--accent)" }}>
-          {expanded ? "▲ Réduire" : "▼ Voir la réponse complète"}
-        </button>
-      )}
+      {/* Question */}
+      <div className="px-4 pt-3 pb-2">
+        <p className="text-xs italic mb-3" style={{ color: "var(--text-3)" }}>&ldquo;{m.question}&rdquo;</p>
+        {/* Response */}
+        <div className="rounded-lg p-3 text-sm leading-relaxed" style={{ background: "var(--surface-2)", color: "var(--text-2)", whiteSpace: "pre-wrap" }}>
+          {expanded ? m.response : preview}
+          {!expanded && hasMore && <span style={{ color: "var(--text-3)" }}>…</span>}
+        </div>
+        {hasMore && (
+          <button onClick={() => setExpanded(!expanded)}
+            className="mt-2 text-xs font-medium transition-colors" style={{ color: "var(--accent)" }}>
+            {expanded ? "▲ Réduire" : "▼ Voir la réponse complète"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -529,10 +538,31 @@ export default function AnalysisView({ brand, reports, mentions, gaps, initialPu
                 </div>
               ))}
             </div>
-            {/* Timeline */}
-            <div className="mt-5 pt-4 flex items-center gap-2 text-xs" style={{ borderTop: "1px solid var(--border)", color: "var(--text-3)" }}>
-              <span>ℹ</span>
-              <span>Résultats dans les IA sous <span style={{ color: "var(--text-2)" }}>2 semaines à 2 mois</span> selon la plateforme — Perplexity est la plus rapide.</span>
+            {/* Methodology + Timeline */}
+            <div className="mt-5 pt-4 space-y-2.5" style={{ borderTop: "1px solid var(--border)" }}>
+              {/* Data points badge */}
+              <div className="flex items-center flex-wrap gap-3">
+                <div className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg" style={{ background: "rgba(124,58,237,0.07)", border: "1px solid rgba(124,58,237,0.15)" }}>
+                  <span style={{ color: "var(--accent)" }}>🔬</span>
+                  <span style={{ color: "var(--text-2)" }}>
+                    <strong style={{ color: "var(--text)" }}>{totalQuestions * 4} points de données</strong> — {totalQuestions} questions × 4 IA
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                  <span>🕐</span>
+                  <span style={{ color: "var(--text-3)" }}>
+                    Analysé le <strong style={{ color: "var(--text-2)" }}>{new Date(latest.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })} à {new Date(latest.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</strong>
+                  </span>
+                </div>
+              </div>
+              {/* Score breakdown */}
+              <div className="flex items-center gap-4 text-xs flex-wrap" style={{ color: "var(--text-3)" }}>
+                <span>Score = </span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: "var(--accent)" }} />70% taux de citation</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: "#eab308" }} />20% position dans la réponse</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: "#22c55e" }} />10% sentiment</span>
+              </div>
+              <p className="text-xs" style={{ color: "var(--text-3)" }}>ℹ Résultats visibles dans les IA sous <span style={{ color: "var(--text-2)" }}>2 semaines à 2 mois</span> — Perplexity est la plus rapide.</p>
             </div>
           </div>
 
