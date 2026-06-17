@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   if (!brand) return NextResponse.json({ error: "Brand not found" }, { status: 404 });
 
-  const questions = await generateQuestions(brand.name, brand.industry, brand.keywords ?? [], brand.website ?? undefined);
+  const questions = await generateQuestions(brand.name, brand.industry, brand.keywords ?? [], brand.website ?? undefined, brand.context ?? undefined);
 
   const analysisRows: object[] = [];
   const scoresByProvider: Record<string, number> = {};

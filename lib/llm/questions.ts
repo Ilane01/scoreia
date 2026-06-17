@@ -10,7 +10,8 @@ export async function generateQuestions(
   brandName: string,
   industry: string,
   keywords: string[],
-  website?: string
+  website?: string,
+  description?: string
 ): Promise<string[]> {
   try {
     const context = [
@@ -18,6 +19,7 @@ export async function generateQuestions(
       `Secteur : ${industry}`,
       keywords.length > 0 ? `Mots-clés : ${keywords.join(", ")}` : null,
       website ? `Site web : ${website}` : null,
+      description ? `Description de l'activité : ${description}` : null,
     ].filter(Boolean).join("\n");
 
     const completion = await openai.chat.completions.create({

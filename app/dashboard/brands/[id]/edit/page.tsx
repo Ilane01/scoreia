@@ -199,16 +199,17 @@ export default function EditBrandPage() {
 
         <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-2)" }}>
-            Informations clés <span className="font-normal" style={{ color: "var(--text-3)" }}>(optionnel mais recommandé)</span>
+            Description de votre activité
+            <span className="ml-2 text-xs font-semibold px-1.5 py-0.5 rounded" style={{ background: "rgba(124,58,237,0.1)", color: "var(--accent)" }}>Impact direct sur le score</span>
           </label>
           <p className="text-xs mb-3" style={{ color: "var(--text-3)" }}>
-            Prix, services, arguments différenciants, description... Le générateur de contenu utilisera ces données réelles.
+            Décrivez précisément ce que vous faites, vos spécialités, vos certifications — l'IA génère des questions <strong style={{ color: "var(--text-2)" }}>beaucoup plus pertinentes</strong> avec ce contexte. Ex : "Organisme de formation spécialisé dans les certifications RGE, QualiPAC, Qualibat pour artisans BTP".
           </p>
           <textarea
             value={context}
             onChange={(e) => setContext(e.target.value)}
             rows={5}
-            placeholder={`ex:\n- Tarifs : à partir de 2 150€ HT\n- Services : création de site, SEO, refonte\n- Argument clé : +40% de leads en moyenne`}
+            placeholder={`ex: Organisme de formation spécialisé dans les certifications RGE (QualiPAC, Qualibat, QualiPV) pour artisans et installateurs BTP en Île-de-France. Formations inter et intra entreprise.`}
             className="w-full rounded-xl px-4 py-3 text-sm resize-none focus:outline-none transition-colors"
             style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)" }}
           />
